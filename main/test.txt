@@ -1,0 +1,2 @@
+PRINT "f23"
+PRINT "ALO"
