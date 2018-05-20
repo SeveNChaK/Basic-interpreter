@@ -1,7 +1,3 @@
-//
-// Created by Алеша on 20.05.2018.
-//
-
 #ifndef INTERPRETERBASIC_CONSTANTS_H
 #define INTERPRETERBASIC_CONSTANTS_H
 

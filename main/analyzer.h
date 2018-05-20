@@ -1,7 +1,3 @@
-//
-// Created by Алеша on 20.05.2018.
-//
-
 #ifndef INTERPRETERBASIC_ANALYZER_H
 #define INTERPRETERBASIC_ANALYZER_H
 
