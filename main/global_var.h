@@ -18,4 +18,10 @@
 #define FINISHED   10 //Конец программы
 #define END 11
 
+char token[80]; //Строковое представление лексемы
+int token_int; //Внутреннее представление лексемы
+int token_type; //Тип лексемы
+
+char *prog; //Указатель на анализируемое выражение
+
 #endif //INTERPRETERBASIC_CONSTANTS_H

@@ -5,7 +5,7 @@
 #ifndef INTERPRETERBASIC_ANALYZER_H
 #define INTERPRETERBASIC_ANALYZER_H
 
-#include "constants.h"
+#include "global_var.h"
 
 char token[80]; //Строковое представление лексемы
 int token_int; //Внутреннее представление лексемы

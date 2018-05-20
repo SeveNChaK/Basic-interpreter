@@ -1,17 +1,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <mem.h>
-#include "constants.h"
+
+//Мои штуки
+#include "global_var.h"
 
 
-char token[80]; //Строковое представление лексемы
-int token_int; //Внутреннее представление лексемы
-int token_type; //Тип лексемы
-
-char *prog; //Указатель на анализируемое выражение
-
-int isdelim(char c) {
-    if(strchr(" !;,+-<>'/*%^=()", c) || c == 9 ||
+int isDelim(char c) {
+    if(strchr(" !;,+-<>\'/*%=()\"", c) || c == 9 ||
        c == '\r' || c == 0) return 1;
     return 0;
 }
@@ -47,7 +43,7 @@ int getToken() {
 
     //Проверка переменная или команда
     if (isalpha(*prog)) {
-        while (!isdelim(*prog))
+        while (!isDelim(*prog))
             prog++;
         token_type = STRING;
     }
