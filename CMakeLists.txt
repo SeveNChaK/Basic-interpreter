@@ -3,4 +3,4 @@ project(InterpreterBasic C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(InterpreterBasic main/analyzer.c main/main.c main/analyzer.h)
+add_executable(InterpreterBasic main/analyzer.c main/main.c main/analyzer.h main/constants.h)
