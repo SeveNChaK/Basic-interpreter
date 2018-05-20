@@ -1,31 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <mem.h>
+#include <ctype.h>
+
+//Мои штуки
 #include "analyzer.h"
+
+//-------------------------------------------------------------
 
 #define PROG_SIZE 10000
 
-extern jmp_buf e_buf; //Буфер среды функции longjmp()
+//Объявление переменных
+char *program;
+jmp_buf e_buf; //Буфер среды функции longjmp()
 
-int loadProgram(char *p, char *fname) {
-    FILE *file;
-
-    if (!(file = fopen(fname, "r")))
-        return 0;
-    int i = 0;
-    do {
-        *p = (char) getc(file);
-        p++;
-        i++;
-    } while (!feof(file) && i < PROG_SIZE);
-    *(p - 1) = '\0'; //Символ конца программы
-    fclose(file);
-    return 1;
-}
-
-void basic_print(){
-    printf("EEE boyi!");
-}
+//Объявление функций
+int loadProgram(char*, char*); //Считывает программу
 
 int main(int argc, char *argv[]) {
     char *p_buf; //Указатель начала буфера программы
@@ -47,26 +38,29 @@ int main(int argc, char *argv[]) {
 
 //    if (setjmp(e_buf)) exit(1); //Инициализация буфера нелокальных переходов
 
-    prog = p_buf;
+    program = p_buf;
 
+    start(program);
+
+    //TODO
+}
+
+int loadProgram(char *p, char *fname) {
+    FILE *file;
+
+    if (!(file = fopen(fname, "r"))) //Открываем только на чтение
+        return 0;
+
+    //Считываем текст программы в память
+    int i = 0;
     do {
-        token_type = (char) getToken();
+        *p = (char) getc(file);
+        p++;
+        i++;
+    } while (!feof(file) && i < PROG_SIZE);
 
-        //Проверка на присваивание
-        if (token_type == VARIABLE) {
-//            putback();
-//            assignment();
-        } else { //Значит это команда
-            switch (token_int) {
-                case PRINT:
-                    basic_print();
-                    break;
-                case END:
-                    exit(0);
-                default:break;
-            }
-        }
-
-    } while (token_int != FINISHED);
+    *(p - 1) = '\0'; //Символ конца программы
+    fclose(file);
+    return 1;
 }
 
