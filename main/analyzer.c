@@ -29,21 +29,36 @@ struct command {
 
 //Объявление функций
 int getToken();
+
 void putBack();
+
 void assignment();
+
 int isDelim(char);
+
 void sError(int);
-int getIntCommand(char*);
-void level2(int*), level3(int *), level4(int *), level5(int *), level6(int *); //TODO
-void primitive(int*);
-void unary(char, int*);
-void arith(char, int*, int*);
-void getExp(int*);
+
+int getIntCommand(char *);
+
+void level2(int *), level3(int *), level4(int *), level5(int *), level6(int *); //TODO
+void primitive(int *);
+
+void unary(char, int *);
+
+void arith(char, int *, int *);
+
+void getExp(int *);
+
 void basicPrint();
+basicIntput(); //TODO
+basicIf(); //TODO
+basicGoto(); //TODO
+basicGosub(); //TODO
+basicReturn(); //TODO
 
 
 //Начало работы анализатора
-void start(char* p){
+void start(char *p) {
     program = p;
     do {
         token_type = (char) getToken();
@@ -77,8 +92,6 @@ int getToken() {
     token_int = 0;
     temp = token;
 
-
-
     //Проверка закончился ли файл интерпретируемой программы
     if (*program == '\0') {
         *token = '\0';
@@ -88,31 +101,32 @@ int getToken() {
 
     //Проверка на конец строки программы
     if (*program == '\n') {
-        program ++; //Тут были возможно значемые строки
+        program++;
         token_int = EOL;
         *token = '\n';
         temp++;
         *temp = 0;
-        //
         return (token_type = DELIMITER);
     }
-    while (isspace(*program)) program++; //Пропускаем пробелы
+
+    while (isspace(*program)) program++; //Пропускаем пробелы; Перенести в начало, реализовав свою функцию, чтоб \n не удалялся TODO
+
     //Проверка на разделитель
-    if (strchr("!+-/%=;(),><", *program)) {
+    if (strchr("!+-*/%=;(),><", *program)) {
         *temp = *program;
         program++;
         temp++;
-        *temp = 0; //Проверить TODO
+        *temp = 0;
         return (token_type = DELIMITER);
     }
 
     //Проверяем на кавычки
     if (*program == '"') {
         program++;
-        while (*program != '"' && *program != '\r') *temp++ = *program++;
-        if (*program == '\r') sError(1); //TODO
-        program++; //Кажется все же на 2 увеличить. Проверить TODO
-        *temp = '\0'; //Проверить TODO
+        while (*program != '"' && *program != '\n') *temp++ = *program++;
+        if (*program == '\n') sError(1);
+        program++;
+        *temp = 0;
         return (token_type = QUOTE);
     }
 
@@ -121,7 +135,7 @@ int getToken() {
         while (!isDelim(*program)) {
             *temp++ = *program++;
         }
-        *temp = '\0';
+        *temp = 0;
         return (token_type = NUMBER);
     }
 
@@ -129,28 +143,26 @@ int getToken() {
     if (isalpha(*program)) {
         while (!isDelim(*program))
             *temp++ = *program++;
-
-        *temp = 0; //Верно ли мое понимание? Проверить...потом) TODO
-
+        *temp = 0;
         token_int = getIntCommand(token); //Получение внутреннего представления команды
-        if (!token_int) token_type = VARIABLE;
-        else token_type = COMMAND;
+        if (!token_int)
+            token_type = VARIABLE;
+        else
+            token_type = COMMAND;
         return token_type;
     }
-
     return token_type = FINISHED; //Заглушка
 }
 
 int isDelim(char c) {
-    if (strchr(" !;,+-<>\'/*%=()\"", c) || c == 9 ||
-        c == '\r' || c == 0 || c=='\n')
+    if (strchr(" !;,+-<>\'/*%=()\"", c) || c == 9 || c == '\r' || c == 0 || c == '\n')
         return 1;
     return 0;
 }
 
 //Переписать ошибки с русского TODO
-void sError(int error){
-    static char *e[]= {
+void sError(int error) {
+    static char *e[] = {
             "Syntax error",
             "Unpaired parentheses",
             "This is not an expression",
@@ -163,8 +175,8 @@ void sError(int error){
             "The level of nesting GOSUB is too large",
             "RETURN does not match GOSUB"
     };
-    printf("%s\n",e[error]);
-    //longjmp(e_buf, 1); /* возврат в точку сохранения */
+    printf("%s\n", e[error]);
+    //longjmp(e_buf, 1); //Возврат в точку сохранения
 }
 
 int getIntCommand(char *t) {
@@ -203,7 +215,7 @@ void level3(int *result) {
 
     level4(result);
 
-    while ((op = *token) == '+' || op == '/' || op == '%') {
+    while ((op = *token) == '+' || op == '/' || op == '%' || op == '*') {
         getToken();
         level4(&hold);
         arith(op, result, &hold);
@@ -217,39 +229,38 @@ void level4(int *result) {
 
 //Унарный + или -
 void level5(int *result) {
-    char op;
-    op = 0;
+    char operation;
+    operation = 0;
     if ((token_type == DELIMITER) && *token == '+' || *token == '-') {
-        op = *token;
+        operation = *token;
         getToken();
     }
     level6(result);
-    if (op)
-        unary(op, result);
+    if (operation)
+        unary(operation, result);
 }
 
 //Обработка выражения в круглых скобках
-void level6(int *result){
-    if((*token == '(') && (token_type == DELIMITER)) {
+void level6(int *result) {
+    if ((*token == '(') && (token_type == DELIMITER)) {
         getToken();
         level2(result);
-        if(*token != ')')
+        if (*token != ')')
             sError(1);
         getToken();
-    }
-    else
+    } else
         primitive(result);
 }
 
 //Определение значения переменной по ее имени
-void primitive(int *result){
-    switch(token_type) {
+void primitive(int *result) {
+    switch (token_type) {
         case VARIABLE:
             //*result = findVar(token); //Разобраться с переменными TODO
             getToken();
             return;
         case NUMBER:
-            *result  = atoi(token);
+            *result = atoi(token);
             getToken();
             return;
         default:
@@ -258,32 +269,33 @@ void primitive(int *result){
 }
 
 //Изменение знака
-void unary(char o, int *r){
-    if(o=='-') *r = -(*r);
+void unary(char o, int *r) {
+    if (o == '-') *r = -(*r);
 }
 
 //Выполнение специфицированной арифметики
-void arith(char o, int *r, int *h){
+void arith(char o, int *r, int *h) {
     int t, ex;
 
-    switch(o) {
+    switch (o) {
         case '-':
-            *r = *r-*h;
+            *r = *r - *h;
             break;
         case '+':
-            *r = *r+*h;
+            *r = *r + *h;
             break;
         case '*':
             *r = *r * *h;
             break;
         case '/':
-            *r = (*r)/(*h);
+            *r = (*r) / (*h);
             break;
         case '%':
-            t = (*r)/(*h);
-            *r = *r-(t*(*h));
+            t = (*r) / (*h);
+            *r = *r - (t * (*h));
             break;
-        default:break;
+        default:
+            break;
     }
 }
 
@@ -302,7 +314,7 @@ void assignment() {
     int value;
     getToken(); //Получаем имя переменной
 
-    if (!isalpha(*token)){
+    if (!isalpha(*token)) {
         sError(4);
         return;
     }
@@ -311,7 +323,7 @@ void assignment() {
     //TODO
 
     getToken(); //Считываем символ равенства
-    if (*token != '='){
+    if (*token != '=') {
         sError(3);
         return;
     }

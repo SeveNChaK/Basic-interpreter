@@ -1,3 +1,1 @@
-PRINT 5%2
-PRINT "L"
-PRINT "O"
+PRINT 5*2, " ", 700/(10*(2+5))
