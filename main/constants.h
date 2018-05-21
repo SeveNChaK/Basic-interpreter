@@ -10,19 +10,16 @@
 #define VARIABLE   2 //Переменная
 #define NUMBER     3 //Число
 #define COMMAND    4 //Команда
-#define STRING     5 //Временное представление анализируемого выражениея в get_token(); Больше вроде не нужно
-#define QUOTE      6 //Кавычки
+#define QUOTE      5 //Кавычки
 
 //Внутренние представления лексем
-#define PRINT 10 //Печать в консоль
-
-//В разработке
-#define INPUT 11
+#define PRINT 10
+#define INPUT 11 //TODO
 #define IF 12
 #define THEN 13
 #define GOTO 15
-#define GOSUB 16
-#define RETURN 17
+#define GOSUB 16 //TODO
+#define RETURN 17 //TODO
 #define EOL 18 //Конец строки файла
 #define END 19 //Конец файла
 #define FINISHED 20 //Конец программы

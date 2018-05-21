@@ -15,6 +15,7 @@ char *program;
 char token[80]; //Строковое представление лексемы
 int token_int; //Внутреннее представление лексемы
 int token_type; //Тип лексемы
+jmp_buf e_buf;
 
 struct command {
     char name[10];
@@ -28,6 +29,15 @@ struct command {
         "GOSUB", GOSUB,
         "RETURN", RETURN};
 
+#define LAB_LEN 2
+#define NUM_LAB 100
+
+struct label {
+    char name[LAB_LEN]; //Имя метки
+    char *p; //Указатель на место размещения в программе
+};
+struct label labels[NUM_LAB];
+
 //Объявление функций
 int getToken();
 
@@ -37,7 +47,7 @@ void assignment();
 
 int isDelim(char);
 
-void sError(int);
+void sError(int); //Сделать ошибки более информативными
 
 int getIntCommand(char *);
 
@@ -49,14 +59,23 @@ void unary(char, int *);
 void arith(char, int *, int *);
 
 void getExp(int *);
+
 void findEol();
+
+int getNextLabel(char *);
+
+void scanLabels();
+
+void labelInit();
+
+char* findLabel(char*);
 
 void basicPrint();
 
 basicIntput(); //TODO
 void basicIf();
 
-basicGoto(); //TODO
+void basicGoto(); //TODO
 basicGosub(); //TODO
 basicReturn(); //TODO
 
@@ -64,6 +83,11 @@ basicReturn(); //TODO
 //Начало работы анализатора
 void start(char *p) {
     program = p;
+
+    if (setjmp(e_buf)) exit(1); //Инициализация буфера нелокальных переходов
+
+    scanLabels();
+
     do {
         token_type = (char) getToken();
 
@@ -81,6 +105,9 @@ void start(char *p) {
                     break;
                 case IF:
                     basicIf();
+                    break;
+                case GOTO:
+                    basicGoto();
                     break;
                 case END:
                     exit(0);
@@ -184,7 +211,7 @@ void sError(int error) {
             "RETURN does not match GOSUB"
     };
     printf("%s\n", e[error]);
-    //longjmp(e_buf, 1); //Возврат в точку сохранения
+    longjmp(e_buf, 1); //Возврат в точку сохранения
 }
 
 int getIntCommand(char *t) {
@@ -317,6 +344,7 @@ void getExp(int *result) {
     putBack(); //Возвращает последнюю считанную лексему во входной поток
 }
 
+//Присваивание значения переменной
 void assignment() {
 
     int value;
@@ -341,6 +369,14 @@ void assignment() {
     //Присвоить значение
     //TODO
 
+}
+
+//Переход на следующую строку программы
+void findEol() {
+    while (*program != '\n' && *program != '\0')
+        program++;
+    if (*program)
+        program++;
 }
 
 void basicPrint() {
@@ -410,9 +446,77 @@ void basicIf() {
     } else findEol(); //Если ложь - переходим на следующую строку
 }
 
-void findEol() {
-    while (*program != '\n' && *program != '\0')
-        program++;
-    if (*program)
-        program++;
+void basicGoto() {
+    char *location;
+
+    getToken(); //Получаем метку перехода
+
+    //Поиск местоположения метки
+    location = findLabel(token);
+    if (location == '\0')
+        sError(7); //Метка не обнаружена
+    else program = location; //Старт программы с указанной точки
 }
+
+//Инициализация массива хранения меток
+void labelInit() {
+    for (int i = 0; i < NUM_LAB; i++)
+        labels[i].name[0] = '\0';
+}
+
+//Поиск всех меток
+void scanLabels() {
+    int location;
+    char *temp;
+
+    labelInit();  //Инициализация массива меток
+    temp = program;   //Указатель на начало программы
+
+    //Если первая лексема файла является меткой
+    getToken();
+    if (token_type == NUMBER) {
+        strcpy(labels[0].name, token);
+        labels[0].p = program;
+    }
+
+    findEol();
+    do {
+        getToken();
+        if (token_type == NUMBER) {
+            location = getNextLabel(token);
+            if (location == -1 || location == -2) {
+                if (location == -1)
+                    sError(5);
+                else
+                    sError(6);
+            }
+            strcpy(labels[location].name, token);
+            labels[location].p = program; //Текущий указатель программы
+        }
+        //Если строка не помечена, переход к следующей
+        if (token_int != EOL) findEol();
+    } while (token_int != FINISHED);
+    program = temp; //Восстанавливаем начальное значение
+}
+
+char* findLabel(char *s) {
+
+    for (int i = 0; i < NUM_LAB; i++)
+        if (!strcmp(labels[i].name, s))
+            return labels[i].p;
+    return '\0'; //Ошибка
+}
+
+
+//Возвращает индекс на следующую свободную позицию массива меток
+//  -1, если массив переполнен
+//  -2, если дублирование меток
+int getNextLabel(char *s) {
+
+    for (int i = 0; i < NUM_LAB; i++) {
+        if (labels[i].name[0] == 0) return i;
+        if (!strcmp(labels[i].name, s)) return -2;
+    }
+    return -1;
+}
+
