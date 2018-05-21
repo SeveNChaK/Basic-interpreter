@@ -11,11 +11,18 @@
 
 
 //Объявление переменных
+#define LAB_LEN 2
+#define NUM_LAB 100
+#define SUB_NEST 25
+
 char *program;
 char token[80]; //Строковое представление лексемы
 int token_int; //Внутреннее представление лексемы
 int token_type; //Тип лексемы
 jmp_buf e_buf;
+
+char *gStack[SUB_NEST]; //Стек подпрограмм GOSUB
+int gIndex; //Индекс верхней части стека
 
 struct command {
     char name[10];
@@ -27,10 +34,8 @@ struct command {
         "THEN", THEN,
         "GOTO", GOTO,
         "GOSUB", GOSUB,
-        "RETURN", RETURN};
-
-#define LAB_LEN 2
-#define NUM_LAB 100
+        "RETURN", RETURN,
+        "END", END};
 
 struct label {
     char name[LAB_LEN]; //Имя метки
@@ -68,15 +73,19 @@ void scanLabels();
 
 void labelInit();
 
-char* findLabel(char*);
+char *findLabel(char *);
 
 void basicPrint();
 
 basicIntput(); //TODO
 void basicIf();
 
-void basicGoto(); //TODO
-basicGosub(); //TODO
+void basicGoto();
+
+void basicGosub(); //TODO
+void gReturn(); //TODO
+void gPush(char *); //TODO
+char *gPop(); //TODO
 basicReturn(); //TODO
 
 
@@ -108,6 +117,12 @@ void start(char *p) {
                     break;
                 case GOTO:
                     basicGoto();
+                    break;
+                case GOSUB:
+                    basicGosub();
+                    break;
+                case RETURN:
+                    gReturn();
                     break;
                 case END:
                     exit(0);
@@ -499,7 +514,7 @@ void scanLabels() {
     program = temp; //Восстанавливаем начальное значение
 }
 
-char* findLabel(char *s) {
+char *findLabel(char *s) {
 
     for (int i = 0; i < NUM_LAB; i++)
         if (!strcmp(labels[i].name, s))
@@ -519,4 +534,46 @@ int getNextLabel(char *s) {
     }
     return -1;
 }
+
+//Похоже на работу GOTO, кажется все же будет проблема пересечения с метками. Стоит отдельно искать наверно? //TODO
+void basicGosub() {
+    char *location;
+
+    getToken();
+
+    //Поиск метки вызова
+    location = findLabel(token);
+    if (location == '\0')
+        sError(7); //Метка не определена
+    else {
+        gPush(program); //Запомним место, куда вернемся
+        program = location; //Старт программы с указанной точки
+    }
+}
+
+//Возврат из подпрограммы
+void gReturn() {
+    program = gPop();
+}
+
+//Помещает данные в стек GOSUB
+void gPush(char *s) {
+    gIndex++;
+    if (gIndex == SUB_NEST) {
+        sError(12);
+        return;
+    }
+    gStack[gIndex] = s;
+}
+
+//Достает данные из стека GOSUB
+char *gPop() {
+    if (gIndex == 0) {
+        sError(13);
+        return '\0';
+    }
+    return (gStack[gIndex--]);
+}
+
+
 
