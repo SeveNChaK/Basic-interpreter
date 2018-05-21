@@ -23,6 +23,7 @@ struct command {
         "PRINT", PRINT,
         "INPUT", INPUT,
         "IF", IF,
+        "THEN", THEN,
         "GOTO", GOTO,
         "GOSUB", GOSUB,
         "RETURN", RETURN};
@@ -48,10 +49,13 @@ void unary(char, int *);
 void arith(char, int *, int *);
 
 void getExp(int *);
+void findEol();
 
 void basicPrint();
+
 basicIntput(); //TODO
-basicIf(); //TODO
+void basicIf();
+
 basicGoto(); //TODO
 basicGosub(); //TODO
 basicReturn(); //TODO
@@ -74,6 +78,9 @@ void start(char *p) {
             switch (token_int) {
                 case PRINT:
                     basicPrint();
+                    break;
+                case IF:
+                    basicIf();
                     break;
                 case END:
                     exit(0);
@@ -109,7 +116,8 @@ int getToken() {
         return (token_type = DELIMITER);
     }
 
-    while (isspace(*program)) program++; //Пропускаем пробелы; Перенести в начало, реализовав свою функцию, чтоб \n не удалялся TODO
+    while (isspace(*program))
+        program++; //Пропускаем пробелы; Перенести в начало, реализовав свою функцию, чтоб \n не удалялся TODO
 
     //Проверка на разделитель
     if (strchr("!+-*/%=;(),><", *program)) {
@@ -364,4 +372,47 @@ void basicPrint() {
     if (token_int == EOL || token_int == FINISHED) {
         if (last_delim != ';' && last_delim != ',') printf("\n");
     } else sError(0); //Отсутствует ',' или ';'
+}
+
+void basicIf() {
+    int x, y, cond;
+    char operation;
+    getExp(&x); //Получаем левое выражение
+    getToken(); //Получаем оператор
+    if (!strchr("=<>", *token)) {
+        sError(0);      //Недопустимый оператор
+        return;
+    }
+    operation = *token;
+    getExp(&y);  //Получаем правое выражение
+
+    //Определяем результат
+    cond = 0;
+    switch (operation) {
+        case '=':
+            if (x == y) cond = 1;
+            break;
+        case '<':
+            if (x < y) cond = 1;
+            break;
+        case '>':
+            if (x > y) cond = 1;
+            break;
+        default:
+            break;
+    }
+    if (cond) {  //Если значение IF "истина"
+        getToken();
+        if (token_int != THEN) {
+            sError(8);
+            return;
+        }
+    } else findEol(); //Если ложь - переходим на следующую строку
+}
+
+void findEol() {
+    while (*program != '\n' && *program != '\0')
+        program++;
+    if (*program)
+        program++;
 }

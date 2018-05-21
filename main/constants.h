@@ -19,7 +19,7 @@
 //В разработке
 #define INPUT 11
 #define IF 12
-
+#define THEN 13
 #define GOTO 15
 #define GOSUB 16
 #define RETURN 17
