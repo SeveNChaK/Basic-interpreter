@@ -77,7 +77,7 @@ int getToken() {
     token_int = 0;
     temp = token;
 
-    while (isspace(*program)) program++; //Пропускаем пробелы
+
 
     //Проверка закончился ли файл интерпретируемой программы
     if (*program == '\0') {
@@ -87,15 +87,16 @@ int getToken() {
     }
 
     //Проверка на конец строки программы
-    if (*program == '\r') {
-        program += 2; //Тут были возможно значемые строки
+    if (*program == '\n') {
+        program ++; //Тут были возможно значемые строки
         token_int = EOL;
-        token[0] = '\r';
-        token[1] = '\n';
+        *token = '\n';
+        temp++;
+        *temp = 0;
         //
         return (token_type = DELIMITER);
     }
-
+    while (isspace(*program)) program++; //Пропускаем пробелы
     //Проверка на разделитель
     if (strchr("!+-/%=;(),><", *program)) {
         *temp = *program;
@@ -117,7 +118,9 @@ int getToken() {
 
     //Проверка на число
     if (isdigit(*program)) {
-        while (!isDelim(*program)) *temp++ = *program++;
+        while (!isDelim(*program)) {
+            *temp++ = *program++;
+        }
         *temp = '\0';
         return (token_type = NUMBER);
     }
@@ -140,7 +143,7 @@ int getToken() {
 
 int isDelim(char c) {
     if (strchr(" !;,+-<>\'/*%=()\"", c) || c == 9 ||
-        c == '\r' || c == 0)
+        c == '\r' || c == 0 || c=='\n')
         return 1;
     return 0;
 }
@@ -148,17 +151,17 @@ int isDelim(char c) {
 //Переписать ошибки с русского TODO
 void sError(int error){
     static char *e[]= {
-            "Синтаксическая ошибка",
-            "Непарные круглые скобки",
-            "Это не выражение",
-            "Предполагается символ равенства",
-            "Не переменная",
-            "Таблица меток переполнена",
-            "Дублирование меток",
-            "Неопределенная метка",
-            "Необходим оператор THEN",
-            "Уровень вложенности GOSUB слишком велик",
-            "RETURN не соответствует GOSUB"
+            "Syntax error",
+            "Unpaired parentheses",
+            "This is not an expression",
+            "The symbol of equality",
+            "Not variable",
+            "Label table is full",
+            "Duplicate labels",
+            "Undefined label",
+            "Operator required THEN",
+            "The level of nesting GOSUB is too large",
+            "RETURN does not match GOSUB"
     };
     printf("%s\n",e[error]);
     //longjmp(e_buf, 1); /* возврат в точку сохранения */
@@ -207,16 +210,9 @@ void level3(int *result) {
     }
 }
 
-//Обработка степени числа (целочисленной)
+//Обработка степени числа (целочисленной) (По заданию не надо)
 void level4(int *result) {
-    int hold;
-
     level5(result);
-    if (*token == '^') {
-        getToken();
-        level4(&hold);
-        arith('^', result, &hold);
-    }
 }
 
 //Унарный + или -
@@ -287,14 +283,6 @@ void arith(char o, int *r, int *h){
             t = (*r)/(*h);
             *r = *r-(t*(*h));
             break;
-        case '^':
-            ex =*r;
-            if(*h==0) {
-                *r = 1;
-                break;
-            }
-            for(t=*h-1; t>0; --t) *r = (*r) * ex;
-            break;
         default:break;
     }
 }
@@ -337,7 +325,7 @@ void assignment() {
 
 void basicPrint() {
     int answer;
-    int len = 0, spaces;
+    int len = 0;
     char last_delim = 0;
 
     do {
@@ -356,18 +344,11 @@ void basicPrint() {
         }
         last_delim = *token;
 
-        if (*token == ';') {
-            //Вычисление числа пробелов при переходе к следующей табуляции
-            spaces = 8 - (len % 8);
-            len += spaces; //Включая позицию табуляции
-            while (spaces) {
-                printf(" ");
-                spaces--;
-            }
-        } else if (*token == ','); //Ничего не делать
-        else if (token_int != EOL && token_int != FINISHED) sError(0);
-    } while (*token == ';' || *token == ',');
+        if (*token != ',' && token_int != EOL && token_int != FINISHED)
+            sError(0);
+    } while (*token == ',');
 
+    //Поотлаживаем и удалим, не нужно
     if (token_int == EOL || token_int == FINISHED) {
         if (last_delim != ';' && last_delim != ',') printf("\n");
     } else sError(0); //Отсутствует ',' или ';'
