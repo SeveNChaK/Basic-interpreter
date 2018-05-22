@@ -1,7 +1,3 @@
-//
-// Created by Алеша on 21.05.2018.
-//
-
 #ifndef INTERPRETERBASIC_CONSTANTS_H
 #define INTERPRETERBASIC_CONSTANTS_H
 
@@ -14,12 +10,12 @@
 
 //Внутренние представления лексем
 #define PRINT 10
-#define INPUT 11 //TODO
+#define INPUT 11
 #define IF 12
 #define THEN 13
 #define GOTO 15
-#define GOSUB 16 //TODO
-#define RETURN 17 //TODO
+#define GOSUB 16
+#define RETURN 17
 #define EOL 18 //Конец строки файла
 #define END 19 //Конец файла
 #define FINISHED 20 //Конец программы
