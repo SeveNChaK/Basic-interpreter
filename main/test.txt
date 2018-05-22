@@ -1,6 +1,7 @@
 INPUT "Write var", A
 GOSUB 100
+PRINT "END"
 END
 
 100 PRINT "A = ", A
-    END
+    RETURN
