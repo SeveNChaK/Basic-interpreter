@@ -43,11 +43,22 @@ struct label {
 };
 struct label labels[NUM_LAB];
 
+/*
+ * Зачем стараться, если можно сделать переменные ОДНОЙ буквой
+ * и просто использовать массив =)
+ */
+int variables[26]= {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0
+};
+
 //Объявление функций
 int getToken();
 
 void putBack();
 
+int findVar(char*);
 void assignment();
 
 int isDelim(char);
@@ -77,16 +88,15 @@ char *findLabel(char *);
 
 void basicPrint();
 
-basicIntput(); //TODO
+void basicInput();
 void basicIf();
 
 void basicGoto();
 
-void basicGosub(); //TODO
-void gReturn(); //TODO
-void gPush(char *); //TODO
-char *gPop(); //TODO
-basicReturn(); //TODO
+void basicGosub();
+void basicReturn();
+void gPush(char *);
+char *gPop();
 
 
 //Начало работы анализатора
@@ -112,6 +122,9 @@ void start(char *p) {
                 case PRINT:
                     basicPrint();
                     break;
+                case INPUT:
+                    basicInput();
+                    break;
                 case IF:
                     basicIf();
                     break;
@@ -122,7 +135,7 @@ void start(char *p) {
                     basicGosub();
                     break;
                 case RETURN:
-                    gReturn();
+                    basicReturn();
                     break;
                 case END:
                     exit(0);
@@ -306,7 +319,7 @@ void level6(int *result) {
 void primitive(int *result) {
     switch (token_type) {
         case VARIABLE:
-            //*result = findVar(token); //Разобраться с переменными TODO
+            *result = findVar(token);
             getToken();
             return;
         case NUMBER:
@@ -362,7 +375,7 @@ void getExp(int *result) {
 //Присваивание значения переменной
 void assignment() {
 
-    int value;
+    int var, value;
     getToken(); //Получаем имя переменной
 
     if (!isalpha(*token)) {
@@ -371,7 +384,7 @@ void assignment() {
     }
 
     //Поиск переменной
-    //TODO
+    var = toupper(*token)-'A';
 
     getToken(); //Считываем символ равенства
     if (*token != '=') {
@@ -382,7 +395,7 @@ void assignment() {
     getExp(&value); //Считать присваемое значение
 
     //Присвоить значение
-    //TODO
+    variables[var] = value;
 
 }
 
@@ -552,7 +565,7 @@ void basicGosub() {
 }
 
 //Возврат из подпрограммы
-void gReturn() {
+void basicReturn() {
     program = gPop();
 }
 
@@ -573,6 +586,33 @@ char *gPop() {
         return '\0';
     }
     return (gStack[gIndex--]);
+}
+
+//Определение значения переменной
+int findVar(char *s) {
+    if(!isalpha(*s)){
+        sError(4); //Это не переменная
+        return 0;
+    }
+    return variables[toupper(*token)-'A'];
+}
+
+void basicInput() {
+    char str[80];
+    int var;
+    int i;
+
+    getToken(); //Анализ наличия символьной строки
+    if (token_type == QUOTE) {
+        printf(token); //Если строка есть, проверка запятой
+        getToken();
+        if (*token != ',') sError(1);
+        getToken();
+    }
+    else printf("Write data: ");
+    var = toupper(*token)-'A';
+    scanf("%d",&i);   //Чтение входных данных
+    variables[var] = i;  //Сохранение данных
 }
 
 
