@@ -13,11 +13,15 @@
 #define INPUT 11
 #define IF 12
 #define THEN 13
+#define ELSE 14
 #define GOTO 15
 #define GOSUB 16
 #define RETURN 17
 #define EOL 18 //Конец строки файла
 #define END 19 //Конец файла
 #define FINISHED 20 //Конец программы
+#define FI 21
+#define ONLY_THEN 22
+#define THEN_AND_ELSE
 
 #endif //INTERPRETERBASIC_CONSTANTS_H

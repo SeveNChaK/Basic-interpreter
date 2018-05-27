@@ -32,6 +32,8 @@ struct command {
         "INPUT", INPUT,
         "IF", IF,
         "THEN", THEN,
+        "ELSE", ELSE,
+        "FI", FI,
         "GOTO", GOTO,
         "GOSUB", GOSUB,
         "RETURN", RETURN,
@@ -111,6 +113,17 @@ void gPush(char *);
 char *gPop();
 
 
+void skipElse(){
+    do{
+        getToken();
+        if (token_int == END){
+            getToken();
+            if (token_int != FI)
+                sError(0); //Прописать ошибку (Ожидался END FI) TODO
+        }
+    } while (token_int != FI);
+}
+
 //Начало работы анализатора
 void start(char *p) {
     program = p;
@@ -140,6 +153,9 @@ void start(char *p) {
                 case IF:
                     basicIf();
                     break;
+                case ELSE:
+                    skipElse();
+                    break;
                 case GOTO:
                     basicGoto();
                     break;
@@ -155,7 +171,6 @@ void start(char *p) {
                     break;
             }
         }
-
     } while (token_int != FINISHED);
 }
 
@@ -560,7 +575,18 @@ void basicIf() {
             sError(8);
             return;
         }
-    } else findEol(); //Если ложь - переходим на следующую строку
+    } else {
+        getToken(); //Пропускаем THEN
+        getToken();
+        if (strchr("\n", *token)) {
+            do {
+                getToken();
+                if (token_int == END) {
+                    sError(0); //Прописать ошибку (Ожидался ELSE) TODO
+                }
+            } while (token_int != ELSE);
+        } else findEol(); //Если ложь - переходим на следующую строку
+    }
 }
 
 void basicGoto() {
