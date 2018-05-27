@@ -13,7 +13,6 @@
 
 //Объявление переменных
 char *program;
-jmp_buf e_buf; //Буфер среды функции longjmp()
 
 //Объявление функций
 int loadProgram(char*, char*); //Считывает программу
@@ -46,10 +45,8 @@ int main(int argc, char *argv[]) {
     if (!loadProgram(p_buf, file_name)) exit(1);
 
     program = p_buf;
-
     start(program);
-
-    //TODO
+    return 0;
 }
 
 int loadProgram(char *p, char *fname) {

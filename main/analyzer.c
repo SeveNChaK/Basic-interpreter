@@ -48,18 +48,25 @@ struct label labels[NUM_LAB];
  * и просто использовать массив =)
  * возможные переменные A-Z
  */
-int variables[26]= {
+int variables[26] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0
 };
+
+int countV = 0;
+struct variable {
+    char name[80];
+    int value;
+} *p_variable;
 
 //Объявление функций
 int getToken();
 
 void putBack();
 
-int findVar(char*);
+int findVar(char *);
+
 void assignment();
 
 int isDelim(char);
@@ -90,13 +97,17 @@ char *findLabel(char *);
 void basicPrint();
 
 void basicInput();
+
 void basicIf();
 
 void basicGoto();
 
 void basicGosub();
+
 void basicReturn();
+
 void gPush(char *);
+
 char *gPop();
 
 
@@ -176,7 +187,7 @@ int getToken() {
         program++; //Пропускаем пробелы; Перенести в начало, реализовав свою функцию, чтоб \n не удалялся TODO
 
     //Проверка на разделитель
-    if (strchr("!+-*/%=;(),><", *program)) {
+    if (strchr("!+-*/%=:;()><", *program)) {
         *temp = *program;
         program++;
         temp++;
@@ -209,13 +220,28 @@ int getToken() {
             *temp++ = *program++;
         *temp = 0;
         token_int = getIntCommand(token); //Получение внутреннего представления команды
-        if (!token_int)
+        if (!token_int) {
             token_type = VARIABLE;
-        else
+//            checkV();
+        } else
             token_type = COMMAND;
         return token_type;
     }
+    sError(0);
     return token_type = FINISHED; //Заглушка
+}
+
+void checkV() {
+    int i = 0;
+    struct variable *t = p_variable;
+    while (i <= countV) {
+        if (strcmp(token, (*t).name)) return;
+        t++;
+        i++;
+    }
+    p_variable = malloc(sizeof(struct variable) * ++countV);
+    p_variable = t;
+//    t->name = token;
 }
 
 int isDelim(char c) {
@@ -247,7 +273,8 @@ int getIntCommand(char *t) {
 
     //Поиск лексемы в таблице операторов
     for (int i = 0; *tableCommand[i].name; i++) {
-        if (!strcmp(tableCommand[i].name, t)) return tableCommand[i].token_int;
+        if (!strcmp(tableCommand[i].name, t))
+            return tableCommand[i].token_int;
     }
 
     return 0; //Незнакомый оператор
@@ -274,15 +301,15 @@ void level2(int *result) {
 
 //Вычисление произведения или частного двух фвкторов
 void level3(int *result) {
-    char op;
+    char operation;
     int hold;
 
     level4(result);
 
-    while ((op = *token) == '+' || op == '/' || op == '%' || op == '*') {
+    while ((operation = *token) == '+' || operation == '/' || operation == '%' || operation == '*') {
         getToken();
         level4(&hold);
-        arith(op, result, &hold);
+        arith(operation, result, &hold);
     }
 }
 
@@ -316,11 +343,24 @@ void level6(int *result) {
         primitive(result);
 }
 
+struct variable *findV(char n[]) {
+    int i = 1;
+    struct variable *t = p_variable;
+    while (i <= countV) {
+        if (!strcmp(n, t->name)) {
+            return t;
+        }
+        i++;
+        t++;
+    }
+    return NULL;
+}
+
 //Определение значения переменной по ее имени
 void primitive(int *result) {
     switch (token_type) {
         case VARIABLE:
-            *result = findVar(token);
+            *result = findV(token)->value;
             getToken();
             return;
         case NUMBER:
@@ -339,7 +379,7 @@ void unary(char o, int *r) {
 
 //Выполнение специфицированной арифметики
 void arith(char o, int *r, int *h) {
-    int t, ex;
+    int t;
 
     switch (o) {
         case '-':
@@ -373,30 +413,78 @@ void getExp(int *result) {
     putBack(); //Возвращает последнюю считанную лексему во входной поток
 }
 
+void setValue(struct variable *var, int v) {
+    var->value = v;
+}
+
+struct variable *addV(char n[]) {
+    struct variable *t = NULL;
+    if (countV != 0)
+        t = p_variable;
+
+    countV++;
+    p_variable = (struct variable *) realloc(p_variable, sizeof(struct variable) * countV);
+    if (t != NULL) {
+        p_variable = t;
+    }
+    int i = 1;
+    while (i < countV) {
+        p_variable++;
+        i++;
+    }
+    struct variable *r = p_variable;
+    strcpy(p_variable->name, n);
+    i = 1;
+    while (i < countV) {
+        p_variable--;
+        i++;
+    }
+    return r;
+}
+
+void pri() {
+    int i = 1;
+    while (i <= countV) {
+        p_variable++;
+        i++;
+    }
+}
+
+
 //Присваивание значения переменной
 void assignment() {
 
-    int var, value;
+    int value;
     getToken(); //Получаем имя переменной
 
-    if (!isalpha(*token)) {
-        sError(4);
-        return;
+    struct variable *var;
+    if ((var = findV(token)) != NULL) {
+        getToken(); //Считываем равно
+        getExp(&value);
+        setValue(var, value);
+    } else {
+        var = addV(token);
+        getToken(); // Считываем равно
+        getExp(&value);
+        setValue(var, value);
     }
 
-    //Поиск переменной
-    var = toupper(*token)-'A';
-
-    getToken(); //Считываем символ равенства
-    if (*token != '=') {
-        sError(3);
-        return;
+    if (value == 300) {
+//        pri();
     }
 
-    getExp(&value); //Считать присваемое значение
 
-    //Присвоить значение
-    variables[var] = value;
+//    if (!isalpha(*token)) {
+//        sError(4);
+//        return;
+//    }
+
+//    getToken(); //Считываем символ равенства
+//    if (*token != '=') {
+//        sError(3);
+//        return;
+//    }
+
 
 }
 
@@ -429,9 +517,9 @@ void basicPrint() {
         }
         last_delim = *token;
 
-        if (*token != ',' && token_int != EOL && token_int != FINISHED)
+        if (*token != ';' && token_int != EOL && token_int != FINISHED)
             sError(0);
-    } while (*token == ',');
+    } while (*token == ';');
 
     //Поотлаживаем и удалим, не нужно
     if (token_int == EOL || token_int == FINISHED) {
@@ -591,11 +679,11 @@ char *gPop() {
 
 //Определение значения переменной
 int findVar(char *s) {
-    if(!isalpha(*s)){
+    if (!isalpha(*s)) {
         sError(4); //Это не переменная
         return 0;
     }
-    return variables[toupper(*token)-'A'];
+    return variables[toupper(*token) - 'A'];
 }
 
 void basicInput() {
@@ -609,10 +697,9 @@ void basicInput() {
         getToken();
         if (*token != ',') sError(1);
         getToken();
-    }
-    else printf("Write data: ");
-    var = toupper(*token)-'A';
-    scanf("%d",&i);   //Чтение входных данных
+    } else printf("Write data: ");
+    var = toupper(*token) - 'A';
+    scanf("%d", &i);   //Чтение входных данных
     variables[var] = i;  //Сохранение данных
 }
 
