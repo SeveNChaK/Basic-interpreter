@@ -61,9 +61,8 @@ int loadProgram(char *p, char *fname) {
         *p = (char) getc(file);
         p++;
         i++;
-        if (i == PROG_SIZE){
-            p_buf = (char*)realloc(p_buf, (size_t) (i + PROG_SIZE));
-        }
+        if (i == PROG_SIZE)
+            p_buf = (char*) realloc(p_buf, (size_t) (i + PROG_SIZE));
     } while (!feof(file));
     *(p - 1) = '\0'; //Символ конца программы
     fclose(file);
