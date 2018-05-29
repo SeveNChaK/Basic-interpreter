@@ -1,12 +1,9 @@
-stepen = 10
+number = 1488
 i = 1
-res = 1
-GOSUB 100
+100 i = i + 1
+IF i = number THEN
+        PRINT "Counted up to ", i
+    ELSE
+        GOTO 100
+END FI
 END
-
-100 IF i > stepen THEN RETURN
-    res = res * 2
-    PRINT 2, "^", i, " = ", res
-    i = i + 1
-    GOSUB 100
-    RETURN
