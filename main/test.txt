@@ -1,4 +1,12 @@
-A = 1
-INPUT A
-PRINT "A = "; A
+stepen = 10
+i = 1
+res = 1
+GOSUB 100
 END
+
+100 IF i > stepen THEN RETURN
+    res = res * 2
+    PRINT 2, "^", i, " = ", res
+    i = i + 1
+    GOSUB 100
+    RETURN

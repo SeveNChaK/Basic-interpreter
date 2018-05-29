@@ -21,7 +21,5 @@
 #define END 19 //Конец файла
 #define FINISHED 20 //Конец программы
 #define FI 21
-#define ONLY_THEN 22
-#define THEN_AND_ELSE
 
 #endif //INTERPRETERBASIC_CONSTANTS_H

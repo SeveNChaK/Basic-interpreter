@@ -9,7 +9,6 @@
 
 //-------------------------------------------------------------
 
-
 //Объявление переменных
 #define LAB_LEN 2
 #define NUM_LAB 100
@@ -52,26 +51,26 @@ struct variable {
 } *p_variable;
 
 //Объявление функций
-int getToken();
+int getToken(); //Достает очередную лексему
 
-void putBack();
-void findEol();
-int isDelim(char);
+void putBack(); //Возвращает лексему во взожной поток
+void findEol(); //Переходит на следующую строку
+int isDelim(char); //Проверяет является ли символ разделителем
 void sError(int); //Сделать ошибки более информативными
-int getIntCommand(char *);
+int getIntCommand(char *); //Возвращает внутреннее представление команды
 
-void assignment();
-void level2(int *), level3(int *), level4(int *), level5(int *);
-void primitive(int *);
-void unary(char, int *);
-void arith(char, int *, int *);
-void getExp(int *);
-struct variable *findV(char[]);
+void assignment(); //Присваивает значение переменной
+void level2(int *), level3(int *), level4(int *), level5(int *); //Уровни анализа арифметической операции
+void value(int *); //Определение значения переменной
+void unary(char, int *); //Изменение знака
+void arith(char, int *, int *); //Примитивные операции
+void getExp(int *); //Начало анализа арифметического выражения
+struct variable *findV(char[]); //Поиск переменной по имени
 
-int getNextLabel(char *);
-void scanLabels();
-void labelInit();
-char *findLabel(char *);
+int getNextLabel(char *); //Возвращает следующую метку
+void scanLabels(); //Находит все метки
+void labelInit(); //Заполняет массив с метками нулями
+char *findLabel(char *); //Возвращает метку
 
 void basicPrint();
 void basicInput();
@@ -83,7 +82,6 @@ void basicReturn();
 void gPush(char *);
 char *gPop();
 
-//Начало работы анализатора
 void start(char *p) {
     program = p;
 
@@ -161,7 +159,7 @@ int getToken() {
         program++; //Пропускаем пробелы; Перенести в начало, реализовав свою функцию, чтоб \n не удалялся TODO
 
     //Проверка на разделитель
-    if (strchr("!+-*/%=:;()><", *program)) {
+    if (strchr("+-*/%=:,()><", *program)) {
         *temp = *program;
         program++;
         temp++;
@@ -196,13 +194,11 @@ int getToken() {
         token_int = getIntCommand(token); //Получение внутреннего представления команды
         if (!token_int) {
             token_type = VARIABLE;
-//            checkV();
         } else
             token_type = COMMAND;
         return token_type;
     }
     sError(0);
-    return token_type = FINISHED; //Заглушка
 }
 
 int isDelim(char c) {
@@ -211,7 +207,8 @@ int isDelim(char c) {
     return 0;
 }
 
-//Переписать ошибки с русского TODO
+//Чем я думал? Можно же просто аргументом строку подавать...
+//Обязательно когда-нибудь перепишу
 void sError(int error) {
     static char *e[] = {
             "Syntax error",
@@ -247,7 +244,7 @@ void putBack() {
     for (; *t; t++) program--;
 }
 
-//Сложение или вычитание двух термов
+//Сложение или вычитание
 void level2(int *result) {
     char op;
     int hold;
@@ -260,14 +257,14 @@ void level2(int *result) {
     }
 }
 
-//Вычисление произведения или частного двух фвкторов
+//Вычисление произведения или частного
 void level3(int *result) {
     char operation;
     int hold;
 
     level4(result);
 
-    while ((operation = *token) == '+' || operation == '/' || operation == '%' || operation == '*') {
+    while ((operation = *token) == '/' || operation == '%' || operation == '*') {
         getToken();
         level4(&hold);
         arith(operation, result, &hold);
@@ -296,11 +293,11 @@ void level5(int *result) {
             sError(1);
         getToken();
     } else
-        primitive(result);
+        value(result);
 }
 
 //Определение значения переменной по ее имени
-void primitive(int *result) {
+void value(int *result) {
     switch (token_type) {
         case VARIABLE:
             *result = findV(token)->value;
@@ -348,12 +345,12 @@ void arith(char o, int *r, int *h) {
 
 void getExp(int *result) {
     getToken();
-    if (!*token) {
-        sError(2);
-        return;
-    }
+//    if (!*token) {
+//        sError(2);
+//        return;
+//    }
     level2(result);
-    putBack(); //Возвращает последнюю считанную лексему во входной поток
+    putBack();
 }
 
 struct variable *findV(char n[]) {
@@ -427,8 +424,7 @@ void findEol() {
 
 void basicPrint() {
     int answer;
-    int len = 0;
-    char last_delim = 0;
+    char lastDelim = 0;
 
     do {
         getToken(); //Получаем следующий элемент
@@ -436,23 +432,22 @@ void basicPrint() {
 
         if (token_type == QUOTE) {
             printf(token);
-            len += strlen(token);
             getToken();
         } else { //Значит выражение
             putBack();
             getExp(&answer);
             getToken();
-            len += printf("%d", answer);
+            printf("%d", answer);
         }
-        last_delim = *token;
+        lastDelim = *token;
 
-        if (*token != ';' && token_int != EOL && token_int != FINISHED)
+        if (*token != ',' && token_int != EOL && token_int != FINISHED)
             sError(0);
-    } while (*token == ';');
+    } while (*token == ',');
 
-    //Поотлаживаем и удалим, не нужно
     if (token_int == EOL || token_int == FINISHED) {
-        if (last_delim != ';' && last_delim != ',') printf("\n");
+        if (lastDelim != ';' && lastDelim != ',') printf("\n");
+        else sError(0);
     } else sError(0); //Отсутствует ',' или ';'
 }
 
@@ -540,8 +535,8 @@ void scanLabels() {
     labelInit();  //Инициализация массива меток
     temp = program;   //Указатель на начало программы
 
-    //Если первая лексема файла является меткой
     getToken();
+    //Если лексема является меткой
     if (token_type == NUMBER) {
         strcpy(labels[0].name, token);
         labels[0].p = program;
@@ -568,7 +563,6 @@ void scanLabels() {
 }
 
 char *findLabel(char *s) {
-
     for (int i = 0; i < NUM_LAB; i++)
         if (!strcmp(labels[i].name, s))
             return labels[i].p;
@@ -587,7 +581,6 @@ int getNextLabel(char *s) {
     return -1;
 }
 
-//Похоже на работу GOTO, кажется все же будет проблема пересечения с метками. Стоит отдельно искать наверно? //TODO
 void basicGosub() {
     char *location;
 
@@ -628,7 +621,6 @@ char *gPop() {
 }
 
 void basicInput() {
-    char str[80];
     int i;
     struct variable *var;
 

@@ -19,25 +19,25 @@ char *p_buf; //Указатель начала буфера программы
 int loadProgram(char*, char*); //Считывает программу
 
 /*
- * Переменные есть, НО длинной в ОДНУ букву!
+ * Переменные
  * Реализованы подпрограммы GOSUB/RETURN
  * Реализован GOTO: Количество меток ограничено 100 шт., а длина имени 2 символами
  * Реализован IF <, >, = THEN, ELSE
  * Реализован PRINT: параметры перечисляются через запятую
+ * Реализован INPUT
  * Реализованы + - / % * и выражения в скобках
  */
-
 int main(int argc, char *argv[]) {
     char *file_name = argv[1]; //Имя файла программы
 
     if (argc != 2) {
-        printf("Используйте формат: <исполняемый файл>.exe <файл программы>.txt");
+        printf("Use format: <executable file>.exe <program file>.txt");
         exit(1);
     }
 
     //Выделение памяти для программы
     if (!(p_buf = (char *) malloc(PROG_SIZE))) {
-        printf("Ошибка при выделении памяти ERROR");
+        printf("Error allocating memory");
         exit(1);
     }
 
