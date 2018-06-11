@@ -9,14 +9,13 @@
 
 //-------------------------------------------------------------
 
-#define PROG_SIZE 2000
+#define PROG_SIZE 16
 
 //Объявление переменных
 char *program;
-char *p_buf; //Указатель начала буфера программы
 
 //Объявление функций
-int loadProgram(char*, char*); //Считывает программу
+int loadProgram(char*); //Считывает программу
 
 /*
  * Переменные
@@ -36,35 +35,37 @@ int main(int argc, char *argv[]) {
     }
 
     //Выделение памяти для программы
-    if (!(p_buf = (char *) malloc(PROG_SIZE))) {
+    if (!(program = (char *) malloc(PROG_SIZE))) {
         printf("Error allocating memory");
         exit(1);
     }
 
     //Загрузка программы
-    if (!loadProgram(p_buf, file_name)) exit(1);
+    if (!loadProgram(file_name)) exit(1);
 
-    program = p_buf;
     start(program);
     return 0;
 }
 
-int loadProgram(char *p, char *fname) {
+int loadProgram(char *fname) {
     FILE *file;
-
-    if (!(file = fopen(fname, "r"))) //Открываем только на чтение
+    if (!(file = fopen(fname, "r")))
         return 0;
+    char *point = program;
+    int i = 0, k = 1;
 
-    //Считываем текст программы в память
-    int i = 0;
     do {
-        *p = (char) getc(file);
-        p++;
+        *point = (char) getc(file);
+        point++;
         i++;
-        if (i == PROG_SIZE)
-            p_buf = (char*) realloc(p_buf, (size_t) (i + PROG_SIZE));
+        if (i == k * PROG_SIZE) {
+            k++;
+            program = (char *) realloc(program, (size_t) (k * PROG_SIZE));
+            point = program;
+            point += i;
+        }
     } while (!feof(file));
-    *(p - 1) = '\0'; //Символ конца программы
+    *(point - 1) = 0;
     fclose(file);
     return 1;
 }
