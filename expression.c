@@ -96,13 +96,14 @@ void value(struct Program *program, int *result) {
                 printError("Var not init"); //TODO
             *result = temp->value;
             getToken(program);
-            return;
+            break;
         case NUMBER:
             *result = atoi(program->token.name);
             getToken(program);
-            return;
+            break;
         default:
             printError("Syntax error");
+            break;
     }
 }
 

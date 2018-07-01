@@ -1,17 +1,25 @@
-power = 10
-i = 1
-result = 1
-GOSUB 100
+INPUT a
+b = 10000
+IF a = -1 THEN
+    GOTO 100
+ENDFI
+IF a < 3 THEN
+    IF a = 1 THEN
+        b = 1
+    ELSE
+        b = 2
+    ENDFI
+ELSE
+    IF a = 3 THEN
+        b = 3
+    ELSE
+        b = 4
+    ENDFI
+ENDFI
+PRINT "b = ", b
+100
 END
 
-100 IF i > power THEN
-        RETURN
-    ENDFI
-    result = result * 2
-    PRINT 2, "^", i, " = ", result
-    i = i + 1
-    GOSUB 100
-    RETURN
 
 
 
